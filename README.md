@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# web-titula-rr
 
-## Getting Started
+Frontend do **Titula RR**, sistema de regularização fundiária do governo do
+Estado de Roraima. Next.js 16 (App Router, TypeScript) consumindo a
+[`api-titula-rr`](https://github.com/4jc4/api-titula-rr) — sessão opaca em
+cookie `httpOnly` (sem JWT), rodando na mesma intranet do governo, mesma
+origem que a API via Nginx.
 
-First, run the development server:
+Decisões de arquitetura e convenções: [`AGENTS.md`](./AGENTS.md).
+
+## Stack
+
+- **Next.js 16** (App Router) + **TypeScript**
+- **Tailwind CSS 4**
+- **orval**: gera tipos e cliente HTTP a partir do OpenAPI da
+  `api-titula-rr` (`/api/docs-json`) — fonte única do contrato, nunca
+  editado à mão (`lib/api/generated/`)
+- **react-hook-form + zod**: formulários
+- **@tanstack/react-query**: estado de servidor no cliente (paginação,
+  mutations)
+
+## Requisitos
+
+- Node.js **>= 24**
+- A [`api-titula-rr`](https://github.com/4jc4/api-titula-rr) rodando em
+  paralelo — este frontend não funciona sozinho, ele é cliente da API.
+
+## Rodando localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# terminal 1 — no repositório da api-titula-rr
+AUTH_VALIDATOR=fake npm run start:dev    # porta 3000
+
+# terminal 2 — aqui
+cp .env.example .env.local
+npm install
+npm run dev                               # http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Com `AUTH_VALIDATOR=fake` na API, o login usa usuários fixos de
+desenvolvimento (`dev.gestor`, `dev.admin`, `dev.titulacao`, todos com
+senha `dev`) — sem precisar de Active Directory nenhum.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Comandos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando             | O que faz                                               |
+| ------------------- | ------------------------------------------------------- |
+| `npm run dev`       | Next em watch mode, porta 3001                          |
+| `npm run build`     | build de produção                                       |
+| `npm start`         | serve o build de produção                               |
+| `npm run lint`      | eslint                                                  |
+| `npm run format`    | prettier                                                |
+| `npm run typecheck` | `tsc --noEmit`                                          |
+| `npm run codegen`   | regenera `lib/api/generated` a partir do OpenAPI da API |
 
-## Learn More
+## Por que a porta 3001
 
-To learn more about Next.js, take a look at the following resources:
+A API roda na 3000 por padrão. `next.config.ts` reescreve `/api/*` para
+`API_INTERNAL_URL` (a API) — assim o navegador enxerga uma origem só, sem
+precisar de CORS nem de configuração extra, mesmo em dev com dois
+processos separados.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Commit sempre em branch — nunca direto em `main`. PRs squash-merged.
