@@ -1,0 +1,22 @@
+name: PR Title
+
+# Mesma convenção da api-titula-rr: Conventional Commits é exigido só no
+# TÍTULO do PR (o pre-commit local não valida a mensagem de commit).
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  lint-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Valida o título do PR (Conventional Commits)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$PR_TITLE" | npx commitlint

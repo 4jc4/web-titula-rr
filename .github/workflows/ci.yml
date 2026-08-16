@@ -1,0 +1,34 @@
+name: CI
+
+# lib/api/generated (orval) é COMMITADO — nenhum job aqui depende da
+# api-titula-rr estar no ar. A checagem de que o cliente gerado ainda bate
+# com o OpenAPI real da API entra quando o e2e (Playwright) for adicionado
+# e precisar da API rodando de qualquer forma — ver AGENTS.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint -- --max-warnings=0
+
+  typecheck-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
