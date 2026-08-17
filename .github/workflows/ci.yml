@@ -129,3 +129,48 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Builda a imagem de produção
+        run: docker build -t web-titula-rr:ci .
+
+      # Sem API_INTERNAL_URL apontando pra nada real de propósito: o ponto
+      # deste job é confirmar que o CONTAINER sobe e serve — se o CMD do
+      # Dockerfile (server.js, do output standalone) ficar dessincronizado
+      # da saída real do build, é AQUI que quebra, não em produção. Junto,
+      # prova que /status não derruba (500) quando a API está inalcançável
+      # — é exatamente o cenário que app/status/page.tsx trata.
+      - name: Sobe o container e confere /healthz e /status
+        run: |
+          docker run -d --name web-titula-rr-ci \
+            -p 3001:3000 \
+            -e API_INTERNAL_URL=http://localhost:9999 \
+            web-titula-rr:ci
+
+          ok=""
+          for _ in $(seq 1 20); do
+            if curl -fsS http://localhost:3001/healthz > /dev/null; then
+              ok=1
+              break
+            fi
+            sleep 1
+          done
+
+          echo "== logs do container =="
+          docker logs web-titula-rr-ci
+
+          [ -n "$ok" ] || { echo "::error::container não respondeu em /healthz"; exit 1; }
+
+          echo "== /status com API inalcançável (não pode dar 500) =="
+          status_code=$(curl -sS -o /tmp/status-body.html -w '%{http_code}' http://localhost:3001/status)
+          echo "status HTTP: $status_code"
+          [ "$status_code" = "200" ] || { echo "::error::‎/status devolveu $status_code em vez de 200 com API fora do ar"; cat /tmp/status-body.html; exit 1; }
+          grep -q 'Fora do ar' /tmp/status-body.html || { echo "::error::/status não mostrou o estado 'down'"; cat /tmp/status-body.html; exit 1; }
+
+      - name: Limpa o container
+        if: always()
+        run: docker rm -f web-titula-rr-ci || true

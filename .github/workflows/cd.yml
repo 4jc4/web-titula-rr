@@ -1,0 +1,200 @@
+name: CD
+
+# ⚠️ NÃO VERIFICADO CONTRA INFRAESTRUTURA REAL — espelha fielmente o cd.yml
+# da api-titula-rr (mesmo runner self-hosted, mesma profundidade de
+# rollback), mas foi escrito sem acesso ao runner/servidor de verdade.
+# Antes do primeiro workflow_dispatch, confirmar à mão:
+#   - runner registrado com os labels [self-hosted, titula-rr-prod]
+#     (o mesmo runner da API serve, se estiver na mesma máquina)
+#   - /opt/titula-rr/web existe, com um docker-compose.yml (pode ser cópia
+#     do daqui) e um .env com pelo menos API_INTERNAL_URL=http://titula-rr-api:3000
+#   - rede `titula-rr-net` já existe (criada pelo deploy da API — ver
+#     docker-compose.yml de lá) e este compose entra nela, não cria de novo
+#   - Nginx já roteando o resto do host pra titula-rr-web:3001 (ver
+#     comentário em docker-compose.yml da API sobre a divisão /api vs. tudo
+#     mais)
+#
+# Dispara sozinho quando o CI (workflow "CI", ver ci.yml) termina com
+# sucesso no main — mesmo padrão da api-titula-rr. workflow_dispatch
+# continua disponível pra redeploy manual.
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+concurrency:
+  group: titula-rr-web-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy production
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on:
+      - self-hosted
+      - titula-rr-prod
+
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # Mesmo raciocínio do cd.yml da API: no gatilho workflow_run,
+          # github.sha pode já ter avançado desde o commit que passou no
+          # CI — head_sha é o commit específico aprovado.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Validate deployment environment
+        run: |
+          set -euo pipefail
+
+          echo "===== RUNNER ====="
+          whoami
+          hostname
+
+          echo
+          echo "===== DEPLOY DIRECTORY ====="
+          test -d /opt/titula-rr/web
+          test -f /opt/titula-rr/web/docker-compose.yml
+          test -f /opt/titula-rr/web/.env
+
+          echo
+          echo "===== DOCKER ====="
+          docker version --format '{{.Server.Version}}'
+          docker compose version
+
+          echo
+          echo "===== CURRENT CONTAINER ====="
+          docker ps \
+            --filter name=titula-rr-web \
+            --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+
+          echo
+          echo "Environment validated successfully."
+
+      - name: Sync application files
+        run: |
+          set -euo pipefail
+
+          echo "===== SYNC APPLICATION ====="
+
+          rsync -rvc --delete \
+            --no-owner \
+            --no-group \
+            --no-perms \
+            --exclude='.env' \
+            --exclude='.git/' \
+            --exclude='node_modules/' \
+            --exclude='.next/' \
+            ./ /opt/titula-rr/web/
+
+      - name: Snapshot current image (rollback points)
+        working-directory: /opt/titula-rr/web
+        run: |
+          set -euo pipefail
+
+          echo "===== SNAPSHOT ====="
+
+          # Duas gerações de histórico — mesmo esquema da API. O rollback
+          # automático abaixo só usa :rollback (1º nível); :rollback-2 é o
+          # escape manual pra dois deploys ruins em sequência.
+          if docker image inspect titula-rr-web:rollback >/dev/null 2>&1; then
+            docker tag titula-rr-web:rollback titula-rr-web:rollback-2
+            echo "Rollback anterior preservado como titula-rr-web:rollback-2."
+          fi
+
+          if docker image inspect titula-rr-web:local >/dev/null 2>&1; then
+            docker tag titula-rr-web:local titula-rr-web:rollback
+            echo "Imagem atual salva como titula-rr-web:rollback."
+          else
+            echo "Nenhuma imagem local anterior — primeiro deploy, sem ponto de rollback."
+          fi
+
+      - name: Build
+        working-directory: /opt/titula-rr/web
+        run: |
+          set -euo pipefail
+
+          echo "===== BUILD ====="
+          docker compose build web
+
+      - name: Deploy
+        working-directory: /opt/titula-rr/web
+        run: |
+          set -euo pipefail
+
+          echo "===== DEPLOY ====="
+          docker compose up -d --no-deps web
+
+          echo
+          echo "===== STATUS ====="
+          docker compose ps
+
+      - name: Health check
+        id: health_check
+        run: |
+          set -euo pipefail
+
+          echo "===== HEALTH CHECK ====="
+
+          # /healthz, não /status: só confirma que o container em si subiu
+          # — não depende da api-titula-rr estar de pé (ver
+          # app/healthz/route.ts e o healthcheck do docker-compose.yml).
+          for attempt in $(seq 1 30); do
+            if curl -fsS \
+              http://127.0.0.1:3001/healthz \
+              >/tmp/titula-web-health.json; then
+              cat /tmp/titula-web-health.json
+              echo
+              echo "Web is healthy."
+              exit 0
+            fi
+
+            echo "Attempt ${attempt}/30 failed; waiting..."
+            sleep 2
+          done
+
+          echo "Web failed health check."
+          docker logs --tail 100 titula-rr-web
+          exit 1
+
+      - name: Rollback on health check failure
+        if: failure() && steps.health_check.outcome == 'failure'
+        working-directory: /opt/titula-rr/web
+        run: |
+          set -euo pipefail
+
+          echo "===== ROLLBACK ====="
+
+          if ! docker image inspect titula-rr-web:rollback >/dev/null 2>&1; then
+            echo "::error::sem imagem de rollback (primeiro deploy) — nada para restaurar; intervenção manual necessária."
+            exit 1
+          fi
+
+          docker tag titula-rr-web:rollback titula-rr-web:local
+          docker compose up -d --no-deps web
+
+          ok=""
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3001/healthz >/tmp/titula-web-rollback-health.json; then
+              cat /tmp/titula-web-rollback-health.json
+              echo
+              ok=1
+              break
+            fi
+            echo "Rollback attempt ${attempt}/30 failed; waiting..."
+            sleep 2
+          done
+
+          if [ -n "$ok" ]; then
+            echo "::warning::deploy falhou no health check — rollback para a versão anterior concluído com sucesso."
+          else
+            echo "::error::rollback também falhou no health check — produção pode estar fora do ar, intervenção manual necessária."
+            docker logs --tail 100 titula-rr-web
+            exit 1
+          fi
