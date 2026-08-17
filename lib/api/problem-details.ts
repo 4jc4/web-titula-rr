@@ -45,3 +45,15 @@ export async function parseProblemDetails(
     };
   }
 }
+
+// O orval tipa o sucesso real (200/201/204) e os status de erro
+// DOCUMENTADOS SEM SCHEMA de corpo (403 etc. — ver mutator.ts) no mesmo
+// union de resposta, com `data: void` pro lado do erro. Como o mutator
+// NUNCA devolve um desses casos — ele lança ApiError antes de retornar
+// qualquer coisa — esse `void` é inalcançável em runtime, só o TypeScript
+// não tem como saber. unwrap() descarta a metade impossível do tipo num
+// lugar só e documentado, em vez de um cast solto em cada call site que
+// usa esses campos.
+export function unwrap<T>(response: { data: T | void }): T {
+  return response.data as T;
+}
