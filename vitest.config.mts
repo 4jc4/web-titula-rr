@@ -10,7 +10,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['**/*.test.{ts,tsx}'],
-    exclude: ['node_modules', '.next', 'e2e/**'],
+    // api-titula-rr: checkout do repositório irmão que o e2e-tests do CI
+    // baixa numa subpasta (ver tsconfig.json) — não faz parte deste
+    // projeto, mesmo que alguém tenha clonado ele ali por conta própria.
+    exclude: ['node_modules', '.next', 'e2e/**', 'api-titula-rr/**'],
   },
   resolve: {
     alias: {
