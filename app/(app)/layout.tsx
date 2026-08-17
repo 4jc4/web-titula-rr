@@ -30,6 +30,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                   Administração
                 </Link>
               )}
+              {/* sem gate de papel — /status é pública na API também */}
+              <Link href="/status" className="text-ink-soft hover:text-ink">
+                Status
+              </Link>
             </nav>
           )}
         </div>

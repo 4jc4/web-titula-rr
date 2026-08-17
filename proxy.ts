@@ -10,7 +10,13 @@ import { SESSION_COOKIE } from '@/lib/session/constants';
 // api-titula-rr sabe isso), então um cookie presente mas expirado/revogado
 // passa por aqui sem problema e só é barrado quando a API responder 401 de
 // verdade (a página protegida chama getCurrentUser() e redireciona).
-const PUBLIC_ROUTES = ['/login'];
+// /login e /status são públicas pelo mesmo motivo que /api/health é
+// @Public() na API — mas só /login expulsa quem já tem sessão (não faz
+// sentido ver o formulário de novo). /status precisa continuar visitável
+// nos DOIS estados: é justamente a página que alguém checa quando algo
+// mais (o login, por exemplo) pode estar quebrado.
+const PUBLIC_ROUTES = ['/login', '/status'];
+const REDIRECT_IF_AUTHENTICATED = ['/login'];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -25,7 +31,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isPublicRoute && hasSessionCookie) {
+  const shouldLeaveIfAuthenticated = REDIRECT_IF_AUTHENTICATED.some((route) =>
+    pathname.startsWith(route),
+  );
+  if (shouldLeaveIfAuthenticated && hasSessionCookie) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
