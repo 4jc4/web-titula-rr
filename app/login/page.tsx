@@ -20,12 +20,12 @@ export default async function LoginPage({
   const redirectTo = from && from !== '/login' ? from : '/';
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+    <main className="flex min-h-screen items-center justify-center bg-paper px-4">
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="mb-1 font-display text-2xl font-semibold text-ink">
           Titula RR
         </h1>
-        <p className="mb-8 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mb-8 text-sm text-ink-soft">
           Entre com sua conta da rede.
         </p>
         <LoginForm redirectTo={redirectTo} />
