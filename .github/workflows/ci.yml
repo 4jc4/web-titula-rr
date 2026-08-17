@@ -1,9 +1,9 @@
 name: CI
 
-# lib/api/generated (orval) é COMMITADO — nenhum job aqui depende da
-# api-titula-rr estar no ar. A checagem de que o cliente gerado ainda bate
-# com o OpenAPI real da API entra quando o e2e (Playwright) for adicionado
-# e precisar da API rodando de qualquer forma — ver AGENTS.md.
+# lib/api/generated (orval) é COMMITADO — lint/typecheck/build/unit não
+# dependem da api-titula-rr estar no ar. Só o e2e (Playwright) precisa dela
+# de verdade — é aí que uma eventual divergência entre o cliente gerado e o
+# contrato real da API apareceria.
 on:
   push:
     branches: [main]
@@ -32,3 +32,100 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Mesma imagem/credenciais do e2e da api-titula-rr (ver
+        # docker-compose.dev.yml de lá) — precisa ser PostGIS, não um
+        # Postgres comum, porque as migrações fazem CREATE EXTENSION postgis.
+        image: imresamu/postgis:17-3.5
+        env:
+          POSTGRES_USER: cardoso
+          POSTGRES_PASSWORD: iteraima
+          POSTGRES_DB: titularr_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cardoso"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout web-titula-rr
+        uses: actions/checkout@v7
+
+      # A api-titula-rr é um repositório IRMÃO, não um pacote publicado —
+      # o e2e precisa dela rodando de verdade do outro lado da rede.
+      # Checkout num subdiretório, mesma máquina do runner.
+      - name: Checkout api-titula-rr
+        uses: actions/checkout@v7
+        with:
+          repository: 4jc4/api-titula-rr
+          path: api-titula-rr
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Sobe a api-titula-rr (AUTH_VALIDATOR=fake, NODE_ENV=test)
+        working-directory: api-titula-rr
+        env:
+          DATABASE_URL: postgresql://cardoso:iteraima@localhost:5432/titularr_test
+        run: |
+          npm ci
+          npx prisma migrate deploy
+
+          # NODE_ENV=test desliga o throttle de /auth/login (ver
+          # AppThrottlerGuard no backend) — sem isso a suíte esbarra no
+          # rate limit de 5/min só de tanto logar em sequência ao longo dos
+          # specs. Processo em background sobrevive aos próximos steps: são
+          # todos a mesma VM do job.
+          NODE_ENV=test AUTH_VALIDATOR=fake npm run start:dev \
+            > /tmp/api-titula-rr.log 2>&1 &
+
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:3000/api/health && exit 0
+            sleep 2
+          done
+          echo "::error::api-titula-rr não respondeu em /api/health a tempo"
+          cat /tmp/api-titula-rr.log
+          exit 1
+
+      - name: Instala dependências e o Chromium do Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # Builda e sobe o Next de verdade (ver playwright.config.ts) — não
+      # dev server, mesmo espírito do docker-image job da API: pega
+      # quebra que só aparece em build de produção.
+      - name: Roda o e2e
+        env:
+          API_INTERNAL_URL: http://localhost:3000
+        run: npm run test:e2e
+
+      - name: Logs da api-titula-rr (só em caso de falha)
+        if: failure()
+        run: cat /tmp/api-titula-rr.log || true
+
+      - name: Relatório do Playwright (só em caso de falha)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

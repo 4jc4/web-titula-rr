@@ -30,9 +30,8 @@ decoded or verified here).
 - `npm run codegen` — regenerates `lib/api/generated/**` from the API's
   live OpenAPI (`ORVAL_API_URL`, default `http://localhost:3000/api/docs-json`).
   Never edit anything under `lib/api/generated` by hand — the next codegen
-  run overwrites it. The generated client **is committed** to the repo; no
-  CI job currently depends on the API being reachable (that changes once
-  e2e/Playwright needs a live API anyway).
+  run overwrites it. The generated client **is committed** to the repo;
+  lint/typecheck/build/unit don't need a live API — only e2e does.
 
 ### Build & quality
 
@@ -44,6 +43,29 @@ decoded or verified here).
   on a clean checkout `tsc` alone fails with `Cannot find name
 'LayoutProps'`. This broke CI once before the ordering was fixed; don't
   "simplify" `typecheck` back to bare `tsc --noEmit`.
+
+### Tests
+
+- `npm test` — Vitest, unit only (pure functions, one component test for
+  `LoginForm`). `vitest.config.mts` has no `test.globals: true` on purpose
+  (explicit imports everywhere, matching the rest of the repo) — that
+  means Testing Library's auto-cleanup doesn't register itself either;
+  `vitest.setup.ts` calls `cleanup()` in an explicit `afterEach` instead.
+  Skip that and tests bleed into each other (two "Entrar" buttons found in
+  the same render tree).
+- `npm run test:e2e` — Playwright, against the **real** `api-titula-rr`,
+  not mocks. Needs the API running with **both** `AUTH_VALIDATOR=fake` and
+  `NODE_ENV=test`:
+  ```bash
+  NODE_ENV=test AUTH_VALIDATOR=fake npm run start:dev   # in api-titula-rr
+  ```
+  `NODE_ENV=test` matters here specifically because it's what disables the
+  API's login throttle (`AppThrottlerGuard`, 5/min) — skip it and the
+  suite starts failing partway through with silent 429s once enough specs
+  have logged in, which reads exactly like a broken session and wastes
+  time debugging the wrong layer. `playwright.config.ts` starts the
+  frontend itself (prod build in CI, dev server locally) — it does not
+  and should not try to start the API.
 
 ## Architecture
 
@@ -93,6 +115,18 @@ prerendering and sharing across users — the "previous" dynamic-by-default
 model is the right fit, not an oversight. Revisit only if a genuinely
 public, session-free page shows up (e.g. a status page).
 
+### Role gate is cosmetic; the API's 403 is the real one
+
+`lib/session/papeis.ts` (`podeListarUsuarios`/`podeRevogarSessoes`) decides
+what the nav (`app/(app)/layout.tsx`) shows and what buttons render — by
+**role**, not by the API's actual permission matrix, which stays only in
+`MATRIZ_PERMISSOES` on the backend. Copying that matrix here would be debt
+that drifts every time the backend changes it. Every protected page
+re-fetches and checks for real (`app/(app)/admin/page.tsx` renders
+`<AccessDenied>` on a genuine `403` from the API) — reaching a route by
+typing the URL directly, past a hidden nav link, still gets the correct
+answer.
+
 ### HTTP contract
 
 - `SESSION_COOKIE` is duplicated in `lib/session/constants.ts` (can't
@@ -123,9 +157,10 @@ public, session-free page shows up (e.g. a status page).
 
 ## Current state
 
-Auth foundation working end-to-end against the real API: login, session
-read server-side via `getCurrentUser()`, logout, optimistic redirect via
-`proxy.ts`. No domain UI yet (título/processo) — waiting on the
-corresponding modules to exist in the API. Next up: role-gated shell,
-admin module (`/admin/usuarios`, mirroring what already exists in the
-API), tests (Vitest + Playwright), CI/CD mirroring the backend's jobs.
+Auth (login/session/logout), role-gated shell, and the admin module
+(`/admin` — paginated user list + revoke sessions) all working end-to-end
+against the real API, with unit tests (Vitest) and e2e (Playwright, three
+roles' worth of RBAC) running in CI. No domain UI yet (título/processo) —
+waiting on the corresponding modules to exist in the API. Next up: a
+status/ops page, and a CD job mirroring the backend's (self-hosted runner,
+health check, rollback).
