@@ -1,26 +1,98 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* =============================================================================
+ * TOKENS — fonte única de verdade. Nenhuma cor/fonte deve aparecer como
+ * literal (hex, nome de família) em componente nenhum — sempre por uma
+ * dessas variáveis, via as classes utilitárias que o @theme inline gera
+ * logo abaixo (bg-paper, text-ink, font-display, etc.).
+ *
+ * Paleta ancorada no assunto do sistema (regularização fundiária): "tinta
+ * de agrimensor" (accent) e "latão de instrumento de topografia" (brass),
+ * não a dupla genérica azul-corporativo. Verde e âmbar SEMÂNTICOS (good/
+ * warn/bad) são intencionalmente distintos do accent — um botão primário
+ * não pode ser confundido com "deu certo".
+ * ========================================================================== */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f1f2ed;
+  --surface: #faf9f5;
+  --ink: #1e231f;
+  --ink-soft: #55564c;
+  --ink-faint: #8a8a78;
+  --line: #d9d6c8;
+
+  --accent: #2b6b5e;
+  --on-accent: #ffffff;
+  --brass: #8c6a2c;
+  --on-brass: #1e231f;
+
+  --good: #3e7a4e;
+  --warn: #a2701f;
+  --bad: #a23b33;
+  --on-good: #ffffff;
+  --on-warn: #ffffff;
+  --on-bad: #ffffff;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* Segue a preferência do sistema — sem seletor de tema manual ainda (não
+ * existe toggle na UI; se um dia existir, um atributo em <html> entra aqui
+ * do lado do media query, sem mexer nos valores). */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #12160f;
+    --surface: #181d16;
+    --ink: #e8e5d8;
+    --ink-soft: #aca98f;
+    --ink-faint: #767460;
+    --line: #2b3126;
+
+    --accent: #5cb69f;
+    --on-accent: #0d1712;
+    --brass: #d4a75c;
+    --on-brass: #1e1608;
+
+    --good: #5fae72;
+    --warn: #cf9b45;
+    --bad: #d3695f;
+    --on-good: #0d1712;
+    --on-warn: #1e1608;
+    --on-bad: #1e1608;
   }
 }
 
+/* @theme inline (não @theme puro): referencia variáveis que só existem em
+ * runtime — as --font-* vêm do next/font (app/layout.tsx), as de cor vêm
+ * do :root acima. Cada variável --color-x ou --font-x aqui vira
+ * automaticamente uma classe utilitária do Tailwind (bg-paper,
+ * text-ink-soft, font-display...). */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-brass: var(--brass);
+  --color-on-brass: var(--on-brass);
+
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-on-good: var(--on-good);
+  --color-on-warn: var(--on-warn);
+  --color-on-bad: var(--on-bad);
+
+  /* Display (Fraunces): só títulos, com moderação. Corpo/UI (Plex Sans):
+   * tudo que é formulário, tabela, texto de trabalho. Mono (Plex Mono):
+   * número de protocolo/matrícula, IDs — sempre com tabular-nums. */
+  --font-display: var(--font-fraunces), ui-serif, serif;
+  --font-body: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
 }

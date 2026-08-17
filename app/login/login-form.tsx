@@ -18,6 +18,11 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
+// Campo de texto do formulário — único lugar onde a classe do <input> é
+// escrita, pra label/senha nunca divergirem visualmente por engano.
+const fieldClass =
+  'rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/35';
+
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
@@ -85,54 +90,42 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       noValidate
     >
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="username"
-          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
+        <label htmlFor="username" className="text-sm font-medium text-ink-soft">
           Usuário
         </label>
         <input
           id="username"
           autoComplete="username"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          className={fieldClass}
           {...register('username')}
         />
         {errors.username && (
-          <p className="text-sm text-red-600 dark:text-red-400">
-            {errors.username.message}
-          </p>
+          <p className="text-sm text-bad">{errors.username.message}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="password"
-          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
+        <label htmlFor="password" className="text-sm font-medium text-ink-soft">
           Senha
         </label>
         <input
           id="password"
           type="password"
           autoComplete="current-password"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          className={fieldClass}
           {...register('password')}
         />
         {errors.password && (
-          <p className="text-sm text-red-600 dark:text-red-400">
-            {errors.password.message}
-          </p>
+          <p className="text-sm text-bad">{errors.password.message}</p>
         )}
       </div>
 
-      {formError && (
-        <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>
-      )}
+      {formError && <p className="text-sm text-bad">{formError}</p>}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-900"
+        className="mt-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:opacity-60"
       >
         {isSubmitting ? 'Entrando…' : 'Entrar'}
       </button>

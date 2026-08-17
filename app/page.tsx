@@ -13,20 +13,20 @@ export default async function HomePage() {
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Titula RR</p>
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <p className="text-sm text-ink-soft">Titula RR</p>
+          <h1 className="font-display text-2xl font-semibold text-ink">
             Olá, {user.name}
           </h1>
         </div>
         <LogoutButton />
       </header>
 
-      <section className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
+      <section className="rounded-md border border-line bg-surface p-4 text-sm">
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
-          <dt className="text-zinc-500 dark:text-zinc-400">Usuário</dt>
-          <dd className="text-zinc-900 dark:text-zinc-50">{user.username}</dd>
-          <dt className="text-zinc-500 dark:text-zinc-400">Papéis</dt>
-          <dd className="text-zinc-900 dark:text-zinc-50">
+          <dt className="text-ink-soft">Usuário</dt>
+          <dd className="font-mono text-ink">{user.username}</dd>
+          <dt className="text-ink-soft">Papéis</dt>
+          <dd className="text-ink">
             {user.papeis.length > 0 ? user.papeis.join(', ') : '—'}
           </dd>
         </dl>
