@@ -3,14 +3,13 @@
 Checklist para subir o `web-titula-rr` no app server (`20.50.2.223`), ao lado
 do container da `api-titula-rr`.
 
-> **Seção 1 concluída em 17/08/2026, exceto o vhost do Nginx.** Runner
-> instalado, diretório e `.env` prontos, e o `cd.yml` já rodou **de ponta a
-> ponta com sucesso** contra o servidor real (`workflow_dispatch`, build,
-> deploy, health check — tudo verde). O único item que falta é o vhost do
-> Nginx em `20.50.2.213`, uma máquina que ninguém envolvido neste runbook
-> teve acesso SSH até agora — sem ele, o container está de pé e responde
-> (`/healthz`, `/status`) mas **ninguém consegue abrir o frontend num
-> navegador pelo domínio**. Ver a pendência única na seção 6.
+> **Seção 1 100% concluída em 17/08/2026 — inclusive o Nginx.** Runner,
+> diretório, `.env`, deploy automático via `cd.yml` (`workflow_dispatch`
+> real: build, deploy, health check, tudo verde) e o vhost do Nginx
+> (`20.50.2.213`, editado por quem tinha acesso lá, com o roteiro que este
+> runbook deixou pronto). `https://titula.intranet.iteraima.rr.gov.br/`
+> serve o frontend de verdade pra qualquer máquina do domínio; `/api/`
+> continua indo pra API, sem quebrar nada que já existia.
 
 `cd.yml` dispara sozinho a cada CI verde no `main`.
 
@@ -79,32 +78,37 @@ do container da `api-titula-rr`.
 - [x] **`/opt/titula-rr/web` existe**, com `docker-compose.yml` e `.env`
       (seção 2) — dono `nti` (mesmo usuário que faz o `rsync` no `cd.yml`).
 
-- [ ] **Nginx (`20.50.2.213` — máquina SEPARADA do app server) roteando pro
-      frontend.** Única pendência real — ver seção 6. Ninguém com este
-      runbook em mãos teve acesso SSH a essa máquina; nem do app server
-      (`20.50.2.223`) nem de fora dá pra alcançar a porta 22 dela (testado,
-      timeout dos dois lados — é bloqueio de firewall, não falha de rede).
-      O que precisa existir, adaptado ao vhost real (provavelmente o mesmo
-      que já roteia `/api` pra API):
+- [x] **Nginx (`20.50.2.213` — máquina SEPARADA do app server) roteando pro
+      frontend.** Feito e verificado em 17/08/2026. O vhost
+      (`/etc/nginx/sites-available/titula-intranet.conf`) já roteava `/api`
+      pra API; o bloco abaixo foi adicionado ao mesmo `server{}` HTTPS, nos
+      mesmos moldes dos snippets compartilhados (`intranet-acl.conf`,
+      `intranet-ssl.conf`, `security-headers.conf`) — sem duplicar headers
+      de segurança, porque `proxy-common.conf` é o mesmo include usado pelo
+      bloco `/api`:
 
   ```nginx
-  # ADICIONAR ao vhost existente — não substituir o que já roteia /api.
-  # /api continua indo pra 20.50.2.223:3000 (api-titula-rr); tudo o mais
-  # (raiz, /login, /admin, /status, os assets do Next) vai pro frontend.
+  location /api/ {
+      proxy_pass http://20.50.2.223:3000;
+      include snippets/proxy-common.conf;
+  }
+
   location / {
       proxy_pass http://20.50.2.223:3001;
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
-      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header X-Forwarded-Proto $scheme;
+      include snippets/proxy-common.conf;
+      # Sem isso o streaming do App Router (respostas parciais conforme
+      # cada Server Component resolve) fica bufferizado pelo Nginx e some
+      # o ganho — é a própria recomendação do self-hosting guide do Next
+      # pra reverse proxy. O bloco /api não precisa disso (JSON, resposta
+      # única, sem streaming).
+      proxy_buffering off;
   }
   ```
 
-  Depois de editar: testar a sintaxe (`nginx -t`) antes de recarregar.
-  Conferir também a pendência já registrada no runbook da API (seção 6 de
-  lá) sobre headers de segurança duplicados/divergentes — vale checar se o
-  vhost novo do frontend tem o mesmo problema antes de dar como resolvido
-  dos dois lados.
+  `nginx -t` + `systemctl reload nginx` confirmados sem erro. A pendência
+  de headers de segurança duplicados registrada no runbook da API (seção 6
+  de lá) **não se repetiu aqui**: `curl -I` mostrou cada header uma única
+  vez, tanto em `/` quanto em `/api/health`.
 
 ---
 
@@ -151,19 +155,24 @@ docker compose up -d
 ## 4. Verificação pós-deploy
 
 - [x] **Liveness responde, direto no container** — `curl
-  http://127.0.0.1:3001/healthz` → `{"status":"ok"}`. Confirmado.
+http://127.0.0.1:3001/healthz` → `{"status":"ok"}`. Confirmado.
 
 - [x] **Status reflete a API de verdade** — `curl
-  http://127.0.0.1:3001/status` mostrando "Operacional" com dado real
+http://127.0.0.1:3001/status` mostrando "Operacional" com dado real
       (uptime, banco conectado) vindo da `api-titula-rr` pela rede
       `titula-rr-net`. Confirmado.
 
-- [ ] **Pelo domínio público, através do Nginx** — ainda não dá pra
-      verificar (pendência da seção 1):
+- [x] **Pelo domínio público, através do Nginx** — confirmado em 17/08/2026,
+      de uma máquina do domínio (o notebook usado nesta sessão não está no
+      domínio, então não alcança `20.50.2.213`/`20.50.2.223` diretamente —
+      qualquer máquina que esteja, sim):
 
   ```sh
-  curl -s https://titula.intranet.iteraima.rr.gov.br/login -o /dev/null -w "status:%{http_code}\n"
-  curl -s https://titula.intranet.iteraima.rr.gov.br/api/health | jq   # confirma que /api ainda vai pra API
+  curl -sI https://titula.intranet.iteraima.rr.gov.br/login
+  # HTTP/2 200, x-powered-by: Next.js, headers de segurança sem duplicação
+
+  curl -s https://titula.intranet.iteraima.rr.gov.br/api/health | jq
+  # "directory": "reachable" — /api continua indo pra api-titula-rr, intacto
   ```
 
 - [x] **`docker compose ps`** mostrou `healthy` depois do `start_period`.
@@ -204,14 +213,8 @@ simples que o da API, não tem migração pra se preocupar em desfazer.
 
 ## 6. Pendências conhecidas
 
-- [ ] **Vhost do Nginx (`20.50.2.213`)** — única coisa que falta pro
-      frontend ser acessível de verdade pelo domínio. Ninguém com acesso a
-      este runbook alcançou essa máquina (porta 22 bloqueada tanto do app
-      server quanto de fora). O trecho de config na seção 1 é um roteiro
-      pra adaptar, não uma cópia do arquivo real.
-
-- [x] ~~Todo o resto da seção 1~~ — runner, diretório, `.env`, e um deploy
-      automático real, todos confirmados em 17/08/2026.
+Nenhuma no momento — a seção 1 inteira (runner, diretório, `.env`, deploy
+automático real e o vhost do Nginx) foi confirmada em 17/08/2026.
 
 - **Nota operacional**: durante a configuração inicial, o `cd.yml` falhou
   repetidas vezes no passo "Set up job" com `429 Too Many Requests` do

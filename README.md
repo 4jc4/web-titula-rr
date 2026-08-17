@@ -85,8 +85,9 @@ a API está inalcançável.
 
 **Deploy automático (`cd.yml`) já rodou de ponta a ponta contra o servidor
 de produção real** — runner instalado no mesmo padrão da API, deploy
-automático confirmado com sucesso. Falta só o vhost do Nginx (roteamento
-pelo domínio) — runbook completo: [`docs/DEPLOY.md`](./docs/DEPLOY.md).
+automático confirmado com sucesso, e o vhost do Nginx já roteia o domínio
+pro app. No ar em `https://titula.intranet.iteraima.rr.gov.br/` — runbook
+completo: [`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 ## Por que a porta 3001
 

@@ -2,10 +2,9 @@ name: CD
 
 # Verificado contra infraestrutura real em 17/08/2026 — runner instalado
 # (mesmo padrão da api-titula-rr: usuário de serviço dedicado gh-runner,
-# serviço de sistema) e um workflow_dispatch completo rodou verde (build,
-# deploy, health check). Falta só o vhost do Nginx numa máquina separada
-# (20.50.2.213) pro app ser alcançável pelo domínio — o container já
-# responde em produção, só não tem rota pública ainda. Runbook completo:
+# serviço de sistema), um workflow_dispatch completo rodou verde (build,
+# deploy, health check) e o vhost do Nginx numa máquina separada
+# (20.50.2.213) já roteia o domínio pro app. Runbook completo:
 # docs/DEPLOY.md.
 #
 # Dispara sozinho quando o CI (workflow "CI", ver ci.yml) termina com
