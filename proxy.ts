@@ -15,7 +15,7 @@ import { SESSION_COOKIE } from '@/lib/session/constants';
 // sentido ver o formulário de novo). /status precisa continuar visitável
 // nos DOIS estados: é justamente a página que alguém checa quando algo
 // mais (o login, por exemplo) pode estar quebrado.
-const PUBLIC_ROUTES = ['/login', '/status'];
+const PUBLIC_ROUTES = ['/login', '/status', '/healthz'];
 const REDIRECT_IF_AUTHENTICATED = ['/login'];
 
 export function proxy(request: NextRequest) {

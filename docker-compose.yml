@@ -1,0 +1,55 @@
+# ============================================================================
+# PRODUÇÃO — web-titula-rr no app server, mesma rede da api-titula-rr
+# Em desenvolvimento use `npm run dev` — não este compose (ver README).
+#
+#   docker compose build
+#   docker compose up -d
+# ============================================================================
+name: titula-rr-web
+
+services:
+  web:
+    build: .
+    image: titula-rr-web:local
+    container_name: titula-rr-web
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '3001:3000'
+    healthcheck:
+      # /healthz nunca toca a api-titula-rr — só confirma que o PROCESSO
+      # Next em si está de pé (ver app/healthz/route.ts). Não é /status de
+      # propósito: a API cair não deveria derrubar/reiniciar ESTE
+      # container, que não tem nada de errado por si só — reiniciar o Next
+      # não conserta a API, só gera ruído.
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+    networks:
+      - titula-rr-net
+
+# Sem serviço de banco: quem fala com o Postgres é a api-titula-rr, não
+# este container.
+#
+# Rede EXTERNA — a MESMA que a api-titula-rr já usa (criada uma vez fora
+# do compose, ver o docker-compose.yml de lá — não precisa criar de novo).
+# API_INTERNAL_URL no .env deste serviço aponta pra
+# http://titula-rr-api:3000: o nome do container da API na rede
+# compartilhada, resolvido pelo DNS interno do Docker — sem precisar de IP
+# nem de configuração extra.
+networks:
+  titula-rr-net:
+    external: true

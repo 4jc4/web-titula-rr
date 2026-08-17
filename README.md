@@ -67,6 +67,27 @@ NODE_ENV=test AUTH_VALIDATOR=fake npm run start:dev
 Sem `NODE_ENV=test` a suíte esbarra no rate limit de login da API (5/min)
 no meio dos specs — ver `CLAUDE.md` para o porquê.
 
+## Docker (imagem de produção)
+
+```bash
+docker build -t web-titula-rr:local .
+```
+
+Build multi-stage com `output: 'standalone'` (`next.config.ts`) — a mesma
+imagem é buildada no CI (`docker-image` job), que sobe um container real e
+confere `/healthz` (nunca toca a API — só confirma que o processo Next em
+si está de pé) e que `/status` degrada graciosamente em vez de 500 quando
+a API está inalcançável.
+
+`docker-compose.yml` entra na mesma rede Docker externa que a
+`api-titula-rr` já usa (`titula-rr-net`) — alcança a API por
+`http://titula-rr-api:3000`, o nome do container dela.
+
+**Deploy automático (`cd.yml`) ainda não foi verificado contra o runner e
+o servidor de produção reais** — espelha o `cd.yml` da API, mas precisa de
+configuração manual antes do primeiro `workflow_dispatch`. Checklist
+completo no cabeçalho do próprio arquivo.
+
 ## Por que a porta 3001
 
 A API roda na 3000 por padrão. `next.config.ts` reescreve `/api/*` para

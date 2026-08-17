@@ -6,6 +6,11 @@ import type { NextConfig } from 'next';
 const apiInternalUrl = process.env.API_INTERNAL_URL ?? 'http://localhost:3000';
 
 const nextConfig: NextConfig = {
+  // standalone: o build produz .next/standalone com só o node_modules que
+  // a aplicação de fato usa (tracing de dependências), pronto pra copiar
+  // pra imagem final sem levar o node_modules inteiro (nem o `npm prune
+  // --omit=dev` que o Dockerfile da API faz) — ver Dockerfile.
+  output: 'standalone',
   // cacheComponents (PPR) deliberadamente DESLIGADO: é opt-in no Next 16, e
   // cada página deste app depende de cookies() (sessão) — não sobra quase
   // nada que valha a pena virar shell estático/compartilhado entre
