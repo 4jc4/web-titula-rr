@@ -6,7 +6,7 @@ Estado de Roraima. Next.js 16 (App Router, TypeScript) consumindo a
 cookie `httpOnly` (sem JWT), rodando na mesma intranet do governo, mesma
 origem que a API via Nginx.
 
-Decisões de arquitetura e convenções: [`AGENTS.md`](./AGENTS.md).
+Decisões de arquitetura e convenções: [`CLAUDE.md`](./CLAUDE.md).
 
 ## Stack
 
@@ -50,8 +50,22 @@ senha `dev`) — sem precisar de Active Directory nenhum.
 | `npm start`         | serve o build de produção                               |
 | `npm run lint`      | eslint                                                  |
 | `npm run format`    | prettier                                                |
-| `npm run typecheck` | `tsc --noEmit`                                          |
+| `npm run typecheck` | `next typegen` + `tsc --noEmit`                         |
 | `npm run codegen`   | regenera `lib/api/generated` a partir do OpenAPI da API |
+| `npm test`          | testes unitários (Vitest)                               |
+| `npm run test:e2e`  | e2e (Playwright) contra a API real                      |
+
+## Testes
+
+Unitário (`npm test`) não precisa da API. E2e (`npm run test:e2e`) precisa
+— e precisa dela subida com **`NODE_ENV=test` além de `AUTH_VALIDATOR=fake`**:
+
+```bash
+NODE_ENV=test AUTH_VALIDATOR=fake npm run start:dev
+```
+
+Sem `NODE_ENV=test` a suíte esbarra no rate limit de login da API (5/min)
+no meio dos specs — ver `CLAUDE.md` para o porquê.
 
 ## Por que a porta 3001
 

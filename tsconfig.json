@@ -30,5 +30,12 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  // api-titula-rr: não faz parte deste projeto — é o checkout do
+  // repositório IRMÃO que o job e2e-tests do CI baixa numa subpasta (ver
+  // .github/workflows/ci.yml) pra subir a API de verdade. Sem este
+  // exclude, `next build` tenta compilar o backend NestJS inteiro com o
+  // tsconfig do Next e falha com dezenas de "Cannot find module
+  // '@nestjs/common'" — o build local nunca pega isso porque não existe
+  // checkout nenhum de api-titula-rr dentro deste diretório.
+  "exclude": ["node_modules", "api-titula-rr"]
 }

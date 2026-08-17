@@ -19,6 +19,10 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Gerado pelo orval (orval.config.ts) — nunca editar, nunca lintar.
     "lib/api/generated/**",
+    // Checkout do repositório IRMÃO que o job e2e-tests do CI baixa numa
+    // subpasta (ver tsconfig.json e .github/workflows/ci.yml) — não é
+    // código deste projeto.
+    "api-titula-rr/**",
   ]),
 ]);
 
