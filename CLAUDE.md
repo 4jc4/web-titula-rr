@@ -164,8 +164,14 @@ working end-to-end against the real API, with unit tests (Vitest) and e2e
 builds and boots for real (`docker-image` CI job — verified with an
 actually-unreachable API to prove `/status` degrades instead of 500).
 
-`cd.yml` exists and mirrors the backend's deploy pipeline, but has
-**never run against real infrastructure** — no SSH/runner access from the
-environment that wrote it. Setup runbook: `docs/DEPLOY.md`. No domain UI
-yet (título/processo) — waiting on the corresponding modules to exist in
-the API.
+`cd.yml` mirrors the backend's deploy pipeline and **has run successfully
+against real production infrastructure** (17/08/2026) — self-hosted
+runner installed under the same dedicated `gh-runner` account the backend
+uses (not a workaround), a full `workflow_dispatch` completed green
+end-to-end (build, deploy, health check), and `titula-rr-web:rollback`
+exists from that run. The Nginx vhost on the separate proxy machine
+(`20.50.2.213`) now routes the domain to the app too — confirmed live at
+`https://titula.intranet.iteraima.rr.gov.br/` from any domain-joined
+machine, `/api/*` still going to the API on the same origin. Runbook:
+`docs/DEPLOY.md`. No domain UI yet (título/processo) — waiting on the
+corresponding modules to exist in the API.

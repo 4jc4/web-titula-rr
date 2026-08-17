@@ -83,10 +83,11 @@ a API está inalcançável.
 `api-titula-rr` já usa (`titula-rr-net`) — alcança a API por
 `http://titula-rr-api:3000`, o nome do container dela.
 
-**Deploy automático (`cd.yml`) ainda não foi verificado contra o runner e
-o servidor de produção reais** — espelha o `cd.yml` da API, mas precisa de
-configuração manual antes do primeiro `workflow_dispatch`. Runbook
-completo (runner, `.env`, vhost do Nginx): [`docs/DEPLOY.md`](./docs/DEPLOY.md).
+**Deploy automático (`cd.yml`) já rodou de ponta a ponta contra o servidor
+de produção real** — runner instalado no mesmo padrão da API, deploy
+automático confirmado com sucesso, e o vhost do Nginx já roteia o domínio
+pro app. No ar em `https://titula.intranet.iteraima.rr.gov.br/` — runbook
+completo: [`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 ## Por que a porta 3001
 

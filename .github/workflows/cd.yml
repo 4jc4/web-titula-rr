@@ -1,20 +1,11 @@
 name: CD
 
-# ⚠️ NÃO VERIFICADO CONTRA INFRAESTRUTURA REAL — espelha fielmente o cd.yml
-# da api-titula-rr (mesma profundidade de rollback), mas foi escrito sem
-# acesso ao runner/servidor de verdade. Runbook completo, passo a passo:
-# docs/DEPLOY.md. Resumo do que precisa existir antes do primeiro
-# workflow_dispatch:
-#   - um runner self-hosted REGISTRADO NESTE REPOSITÓRIO (labels
-#     [self-hosted, titula-rr-prod]) — runners do GitHub são por
-#     repositório; o runner que já atende a api-titula-rr não atende este
-#     repo automaticamente, mesmo rodando na mesma máquina física
-#   - /opt/titula-rr/web existe, com um docker-compose.yml (pode ser cópia
-#     do daqui) e um .env com pelo menos API_INTERNAL_URL=http://titula-rr-api:3000
-#   - rede `titula-rr-net` já existe (criada pelo deploy da API — ver
-#     docker-compose.yml de lá) e este compose entra nela, não cria de novo
-#   - Nginx (máquina separada do app server) roteando o resto do host pra
-#     titula-rr-web:3001, sem mexer no que já roteia /api pra API
+# Verificado contra infraestrutura real em 17/08/2026 — runner instalado
+# (mesmo padrão da api-titula-rr: usuário de serviço dedicado gh-runner,
+# serviço de sistema), um workflow_dispatch completo rodou verde (build,
+# deploy, health check) e o vhost do Nginx numa máquina separada
+# (20.50.2.213) já roteia o domínio pro app. Runbook completo:
+# docs/DEPLOY.md.
 #
 # Dispara sozinho quando o CI (workflow "CI", ver ci.yml) termina com
 # sucesso no main — mesmo padrão da api-titula-rr. workflow_dispatch
