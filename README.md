@@ -85,8 +85,8 @@ a API está inalcançável.
 
 **Deploy automático (`cd.yml`) ainda não foi verificado contra o runner e
 o servidor de produção reais** — espelha o `cd.yml` da API, mas precisa de
-configuração manual antes do primeiro `workflow_dispatch`. Checklist
-completo no cabeçalho do próprio arquivo.
+configuração manual antes do primeiro `workflow_dispatch`. Runbook
+completo (runner, `.env`, vhost do Nginx): [`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
 ## Por que a porta 3001
 

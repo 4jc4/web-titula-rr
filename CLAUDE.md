@@ -157,10 +157,15 @@ answer.
 
 ## Current state
 
-Auth (login/session/logout), role-gated shell, and the admin module
-(`/admin` — paginated user list + revoke sessions) all working end-to-end
-against the real API, with unit tests (Vitest) and e2e (Playwright, three
-roles' worth of RBAC) running in CI. No domain UI yet (título/processo) —
-waiting on the corresponding modules to exist in the API. Next up: a
-status/ops page, and a CD job mirroring the backend's (self-hosted runner,
-health check, rollback).
+Auth (login/session/logout), role-gated shell, the admin module (`/admin`
+— paginated user list + revoke sessions), and a public `/status` page all
+working end-to-end against the real API, with unit tests (Vitest) and e2e
+(Playwright, three roles' worth of RBAC) running in CI. Docker image
+builds and boots for real (`docker-image` CI job — verified with an
+actually-unreachable API to prove `/status` degrades instead of 500).
+
+`cd.yml` exists and mirrors the backend's deploy pipeline, but has
+**never run against real infrastructure** — no SSH/runner access from the
+environment that wrote it. Setup runbook: `docs/DEPLOY.md`. No domain UI
+yet (título/processo) — waiting on the corresponding modules to exist in
+the API.

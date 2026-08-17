@@ -1,18 +1,20 @@
 name: CD
 
 # ⚠️ NÃO VERIFICADO CONTRA INFRAESTRUTURA REAL — espelha fielmente o cd.yml
-# da api-titula-rr (mesmo runner self-hosted, mesma profundidade de
-# rollback), mas foi escrito sem acesso ao runner/servidor de verdade.
-# Antes do primeiro workflow_dispatch, confirmar à mão:
-#   - runner registrado com os labels [self-hosted, titula-rr-prod]
-#     (o mesmo runner da API serve, se estiver na mesma máquina)
+# da api-titula-rr (mesma profundidade de rollback), mas foi escrito sem
+# acesso ao runner/servidor de verdade. Runbook completo, passo a passo:
+# docs/DEPLOY.md. Resumo do que precisa existir antes do primeiro
+# workflow_dispatch:
+#   - um runner self-hosted REGISTRADO NESTE REPOSITÓRIO (labels
+#     [self-hosted, titula-rr-prod]) — runners do GitHub são por
+#     repositório; o runner que já atende a api-titula-rr não atende este
+#     repo automaticamente, mesmo rodando na mesma máquina física
 #   - /opt/titula-rr/web existe, com um docker-compose.yml (pode ser cópia
 #     do daqui) e um .env com pelo menos API_INTERNAL_URL=http://titula-rr-api:3000
 #   - rede `titula-rr-net` já existe (criada pelo deploy da API — ver
 #     docker-compose.yml de lá) e este compose entra nela, não cria de novo
-#   - Nginx já roteando o resto do host pra titula-rr-web:3001 (ver
-#     comentário em docker-compose.yml da API sobre a divisão /api vs. tudo
-#     mais)
+#   - Nginx (máquina separada do app server) roteando o resto do host pra
+#     titula-rr-web:3001, sem mexer no que já roteia /api pra API
 #
 # Dispara sozinho quando o CI (workflow "CI", ver ci.yml) termina com
 # sucesso no main — mesmo padrão da api-titula-rr. workflow_dispatch
