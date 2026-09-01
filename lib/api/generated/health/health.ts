@@ -39,7 +39,7 @@ export const getHealthControllerGetHealthUrl = () => {
 };
 
 export const healthControllerGetHealth = async (
-  options?: RequestInit,
+  options?: Parameters<typeof apiFetch>[1],
 ): Promise<healthControllerGetHealthResponse> => {
   return apiFetch<healthControllerGetHealthResponse>(
     getHealthControllerGetHealthUrl(),

@@ -16,15 +16,17 @@ export type PublicUserDtoOutputPapeisItem =
 
 export const PublicUserDtoOutputPapeisItem = {
   atendimento: 'atendimento',
+  governanca: 'governanca',
+  servicos_fundiarios: 'servicos_fundiarios',
   financeiro: 'financeiro',
   titulacao: 'titulacao',
-  informatica: 'informatica',
   planejamento: 'planejamento',
-  governanca: 'governanca',
   presidencia: 'presidencia',
-  colaborador: 'colaborador',
+  notificacao: 'notificacao',
+  presidente: 'presidente',
   gestor: 'gestor',
   administrador: 'administrador',
+  cidadao: 'cidadao',
 } as const;
 
 export interface PublicUserDtoOutput {
@@ -45,15 +47,17 @@ export type PaginaUsuariosDtoOutputItemsItemPapeisItem =
 
 export const PaginaUsuariosDtoOutputItemsItemPapeisItem = {
   atendimento: 'atendimento',
+  governanca: 'governanca',
+  servicos_fundiarios: 'servicos_fundiarios',
   financeiro: 'financeiro',
   titulacao: 'titulacao',
-  informatica: 'informatica',
   planejamento: 'planejamento',
-  governanca: 'governanca',
   presidencia: 'presidencia',
-  colaborador: 'colaborador',
+  notificacao: 'notificacao',
+  presidente: 'presidente',
   gestor: 'gestor',
   administrador: 'administrador',
+  cidadao: 'cidadao',
 } as const;
 
 export type PaginaUsuariosDtoOutputItemsItem = {
