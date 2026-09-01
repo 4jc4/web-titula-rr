@@ -55,7 +55,7 @@ export const getAdminUsuariosControllerListarV1Url = (
 
 export const adminUsuariosControllerListarV1 = async (
   params?: AdminUsuariosControllerListarV1Params,
-  options?: RequestInit,
+  options?: Parameters<typeof apiFetch>[1],
 ): Promise<adminUsuariosControllerListarV1Response> => {
   return apiFetch<adminUsuariosControllerListarV1Response>(
     getAdminUsuariosControllerListarV1Url(params),
@@ -97,7 +97,7 @@ export const getAdminUsuariosControllerRevogarSessoesV1Url = (
 
 export const adminUsuariosControllerRevogarSessoesV1 = async (
   userId: string,
-  options?: RequestInit,
+  options?: Parameters<typeof apiFetch>[1],
 ): Promise<adminUsuariosControllerRevogarSessoesV1Response> => {
   return apiFetch<adminUsuariosControllerRevogarSessoesV1Response>(
     getAdminUsuariosControllerRevogarSessoesV1Url(userId),

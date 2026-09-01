@@ -26,7 +26,7 @@ export const getAuthControllerLoginV1Url = () => {
 
 export const authControllerLoginV1 = async (
   loginDto: LoginDto,
-  options?: RequestInit,
+  options?: Parameters<typeof apiFetch>[1],
 ): Promise<authControllerLoginV1Response> => {
   return apiFetch<authControllerLoginV1Response>(
     getAuthControllerLoginV1Url(),
@@ -55,7 +55,7 @@ export const getAuthControllerMeV1Url = () => {
 };
 
 export const authControllerMeV1 = async (
-  options?: RequestInit,
+  options?: Parameters<typeof apiFetch>[1],
 ): Promise<authControllerMeV1Response> => {
   return apiFetch<authControllerMeV1Response>(getAuthControllerMeV1Url(), {
     ...options,
@@ -80,7 +80,7 @@ export const getAuthControllerLogoutV1Url = () => {
 };
 
 export const authControllerLogoutV1 = async (
-  options?: RequestInit,
+  options?: Parameters<typeof apiFetch>[1],
 ): Promise<authControllerLogoutV1Response> => {
   return apiFetch<authControllerLogoutV1Response>(
     getAuthControllerLogoutV1Url(),
