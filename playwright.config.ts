@@ -18,7 +18,15 @@ export default defineConfig({
   // list pro console sempre; html só interessa como artefato de CI quando
   // algo falha (ver ci.yml) — `open: 'never'` pra não tentar abrir
   // navegador nenhum no runner.
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  //
+  // `github` escreve cada falha como ANOTAÇÃO do Actions (arquivo, linha,
+  // mensagem). Sem ele, o motivo de uma falha só existe dentro do texto do
+  // log, que o GitHub guarda num blob da Azure — e quem lê o repositório
+  // pela API recebe apenas "Process completed with exit code 1". Com ele, a
+  // falha aparece na própria página do PR e vem pela API.
+  reporter: process.env.CI
+    ? [['list'], ['github'], ['html', { open: 'never' }]]
+    : 'list',
   use: {
     baseURL: 'http://localhost:3001',
     trace: 'retain-on-failure',

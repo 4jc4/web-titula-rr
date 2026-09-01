@@ -30,11 +30,19 @@ test.describe('Autenticação', () => {
     await expect(page).toHaveURL('http://localhost:3001/');
     // nome vem da api-titula-rr via getCurrentUser() no servidor — não é
     // texto estático, prova que o repasse de cookie funcionou de verdade.
+    //
+    // "Chefe" é a primeira palavra de `Chefe da DIGOF (Dev)`, o `name` da
+    // fixture dev.gestor em fake-ad.validator.ts na API (a home mostra
+    // name.split(' ')[0]). É exato de propósito: um teste que aceitasse
+    // qualquer nome deixaria de provar que o dado veio de lá. Mudou a
+    // fixture na API? Muda aqui — as fixtures são contrato entre os dois
+    // repositórios, mesmo não estando no OpenAPI.
+    //
     // getByRole (não getByText): o Next também ecoa o título num anunciador
     // de rota (#__next-route-announcer__) escondido, pra leitor de tela —
     // getByText bate nos dois, o heading é o elemento de verdade.
     await expect(
-      page.getByRole('heading', { name: 'Olá, Gestor' }),
+      page.getByRole('heading', { name: 'Olá, Chefe' }),
     ).toBeVisible();
 
     await page.getByRole('button', { name: 'Sair' }).click();
