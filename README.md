@@ -6,15 +6,23 @@ Estado de Roraima. Next.js 16 (App Router, TypeScript) consumindo a
 cookie `httpOnly` (sem JWT), rodando na mesma intranet do governo, mesma
 origem que a API via Nginx.
 
-Decisões de arquitetura e convenções: [`CLAUDE.md`](./CLAUDE.md).
+## Documentação
+
+| Documento                                            | Para quê                                              |
+| ---------------------------------------------------- | ----------------------------------------------------- |
+| [`docs/architecture.md`](./docs/architecture.md)     | como o app é feito e por quê                          |
+| [`docs/infrastructure.md`](./docs/infrastructure.md) | as máquinas, o vhost, as portas, as permissões        |
+| [`docs/deployment.md`](./docs/deployment.md)         | como o código chega em produção                       |
+| [`docs/runbook.md`](./docs/runbook.md)               | o que fazer quando algo quebra                        |
+| [`CLAUDE.md`](./CLAUDE.md)                           | convenções e armadilhas para quem for editar o código |
 
 ## Stack
 
 - **Next.js 16** (App Router) + **TypeScript**
 - **Tailwind CSS 4**
 - **orval**: gera tipos e cliente HTTP a partir do OpenAPI da
-  `api-titula-rr` (`/api/docs-json`) — fonte única do contrato, nunca
-  editado à mão (`lib/api/generated/`)
+  `api-titula-rr` — fonte única do contrato, nunca editado à mão
+  (`lib/api/generated/`, commitado no repositório)
 - **react-hook-form + zod**: formulários
 - **@tanstack/react-query**: estado de servidor no cliente (paginação,
   mutations)
@@ -52,8 +60,17 @@ senha `dev`) — sem precisar de Active Directory nenhum.
 | `npm run format`    | prettier                                                |
 | `npm run typecheck` | `next typegen` + `tsc --noEmit`                         |
 | `npm run codegen`   | regenera `lib/api/generated` a partir do OpenAPI da API |
-| `npm test`          | testes unitários (Vitest)                               |
-| `npm run test:e2e`  | e2e (Playwright) contra a API real                      |
+
+O `codegen` aceita um arquivo no lugar de uma URL, o que dispensa subir a API:
+
+```bash
+ORVAL_API_URL=../api-titula-rr/openapi/openapi.json npm run codegen
+```
+
+A API versiona esse arquivo e falha o próprio CI se ele divergir do código,
+então ele é tão confiável quanto o `/api/docs-json` de uma instância no ar.
+| `npm test` | testes unitários (Vitest) |
+| `npm run test:e2e` | e2e (Playwright) contra a API real |
 
 ## Testes
 
@@ -66,6 +83,10 @@ NODE_ENV=test AUTH_VALIDATOR=fake npm run start:dev
 
 Sem `NODE_ENV=test` a suíte esbarra no rate limit de login da API (5/min)
 no meio dos specs — ver `CLAUDE.md` para o porquê.
+
+Se o placar vier **8 falhas e 1 passe**, o problema é quase sempre a API não
+estar no ar: o único teste que passa é justamente o que não fala com ela. O
+procedimento completo está em [`docs/runbook.md`](./docs/runbook.md).
 
 ## Docker (imagem de produção)
 
@@ -83,11 +104,9 @@ a API está inalcançável.
 `api-titula-rr` já usa (`titula-rr-net`) — alcança a API por
 `http://titula-rr-api:3000`, o nome do container dela.
 
-**Deploy automático (`cd.yml`) já rodou de ponta a ponta contra o servidor
-de produção real** — runner instalado no mesmo padrão da API, deploy
-automático confirmado com sucesso, e o vhost do Nginx já roteia o domínio
-pro app. No ar em `https://titula.intranet.iteraima.rr.gov.br/` — runbook
-completo: [`docs/DEPLOY.md`](./docs/DEPLOY.md).
+**No ar em `https://titula.intranet.iteraima.rr.gov.br/`**, com deploy
+automático a cada CI verde no `main`. Detalhes em
+[`docs/deployment.md`](./docs/deployment.md).
 
 ## Por que a porta 3001
 
