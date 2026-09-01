@@ -28,7 +28,11 @@ decoded or verified here).
   dev users (`dev.gestor`/`dev.admin`/`dev.titulacao`, password `dev`),
   no Active Directory needed.
 - `npm run codegen` — regenerates `lib/api/generated/**` from the API's
-  live OpenAPI (`ORVAL_API_URL`, default `http://localhost:3000/api/docs-json`).
+  OpenAPI (`ORVAL_API_URL`, default `http://localhost:3000/api/docs-json`).
+  It also accepts a **file path**, which avoids needing the API up:
+  `ORVAL_API_URL=../api-titula-rr/openapi/openapi.json npm run codegen`.
+  That file is versioned in the API and its own CI fails on drift, so it is
+  as trustworthy as a live instance.
   Never edit anything under `lib/api/generated` by hand — the next codegen
   run overwrites it. The generated client **is committed** to the repo;
   lint/typecheck/build/unit don't need a live API — only e2e does.
@@ -141,6 +145,18 @@ answer.
   returns those as data; it always throws `ApiError` instead, so callers
   handle failure in a `catch`, not by inspecting a discriminated union.
 
+## Documentation map
+
+- `docs/architecture.md` — how the app is built and why
+- `docs/infrastructure.md` — machines, vhost, ports, deploy directory
+  permissions
+- `docs/deployment.md` — CI/CD, first-deploy prerequisites
+- `docs/runbook.md` — post-deploy checks, rollback, running e2e locally,
+  known pending items
+
+This file stays for conventions and traps; anything operational belongs in
+`docs/`.
+
 ## Conventions worth knowing before editing
 
 - Comments explain **why**, not what — match that density when touching
@@ -154,6 +170,22 @@ answer.
 - Tooling (prettier, eslint, husky/lint-staged, commitlint config) is a
   deliberate mirror of `api-titula-rr`'s — keep the two in sync rather
   than letting either drift its own way.
+- **When the API's permission matrix changes, re-read `lib/session/papeis.ts`
+  in the same PR.** This file spent two days contradicting the API — `gestor`
+  showed the Administração link and got a 403 — because `usuario:listar` moved
+  to `administrador` on the backend and nobody re-read it here. Approximating
+  the matrix is fine; not checking the approximation is not.
+- **The fake validator's fixtures are contract too.** `dev.gestor`,
+  `dev.admin`, `dev.titulacao` and their `name` values are shared with
+  `api-titula-rr` just like the OpenAPI is — except informally, versioned
+  nowhere, and guarded by nothing. An e2e test here broke because the API
+  renamed a fixture's `name`. Assertions on those names are exact **on
+  purpose**: a test that accepted any name would stop proving the data came
+  from the API.
+- **Playwright's `github` reporter is load-bearing in CI.** Without it a
+  failure's reason lives only inside the log text, which GitHub stores in an
+  Azure blob — anyone reading the repository through the GitHub API gets just
+  `Process completed with exit code 1`.
 
 ## Current state
 
@@ -164,14 +196,19 @@ working end-to-end against the real API, with unit tests (Vitest) and e2e
 builds and boots for real (`docker-image` CI job — verified with an
 actually-unreachable API to prove `/status` degrades instead of 500).
 
-`cd.yml` mirrors the backend's deploy pipeline and **has run successfully
-against real production infrastructure** (17/08/2026) — self-hosted
-runner installed under the same dedicated `gh-runner` account the backend
-uses (not a workaround), a full `workflow_dispatch` completed green
-end-to-end (build, deploy, health check), and `titula-rr-web:rollback`
-exists from that run. The Nginx vhost on the separate proxy machine
-(`20.50.2.213`) now routes the domain to the app too — confirmed live at
-`https://titula.intranet.iteraima.rr.gov.br/` from any domain-joined
-machine, `/api/*` still going to the API on the same origin. Runbook:
-`docs/DEPLOY.md`. No domain UI yet (título/processo) — waiting on the
-corresponding modules to exist in the API.
+`cd.yml` mirrors the backend's deploy pipeline and deploys to real
+production infrastructure — self-hosted runner under the same dedicated
+`gh-runner` account the backend uses, two generations of rollback image, and
+the Nginx vhost on the separate proxy machine (`20.50.2.213`) routing
+`https://titula.intranet.iteraima.rr.gov.br/` to the app, with `/api/*` still
+going to the API on the same origin. Details in `docs/deployment.md` and
+`docs/infrastructure.md`.
+
+In 01/09/2026 four contract divergences with the API were closed in one PR
+(role gate, generated client, two test files) — see `docs/architecture.md`,
+"O contrato, e o que ele não carrega". The same deploy exposed that
+`/opt/titula-rr/web` had never actually been written by the CD; its group and
+`setgid` are now aligned with the API's directory.
+
+No domain UI yet (título/processo) — waiting on the corresponding modules to
+exist in the API.
