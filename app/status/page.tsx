@@ -31,8 +31,8 @@ export default async function StatusPage() {
 
   return (
     <main className="mx-auto max-w-lg px-6 py-10">
-      <h1 className="font-display text-2xl font-semibold text-ink">Status</h1>
-      <p className="mt-1 text-sm text-ink-soft">
+      <h1 className="font-serif text-2xl font-semibold">Status</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         Disponibilidade da api-titula-rr — atualiza a cada 30s.
       </p>
 

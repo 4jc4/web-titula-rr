@@ -2,13 +2,27 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { adminUsuariosControllerRevogarSessoesV1 } from '@/lib/api/generated/admin-usuarios/admin-usuarios';
 import { ApiError, unwrap } from '@/lib/api/problem-details';
 
-// Confirmação inline (não modal): a ação derruba o usuário de TODOS os
-// dispositivos, merece uma pausa antes de disparar, mas não justifica
-// puxar uma lib de dialog só por isto — ver AGENTS.md sobre não adicionar
-// dependência de UI kit especulativa.
+// A ação derruba o usuário de TODOS os dispositivos e não tem desfazer —
+// merece uma parada antes de disparar. Era uma confirmação inline enquanto
+// não havia biblioteca de diálogo no projeto; com o shadcn adotado
+// (02/09/2026) o AlertDialog passou a ser o caminho de menos resistência, e
+// ele traz de graça o que a versão inline não tinha: foco preso no diálogo,
+// Esc para cancelar e os papéis ARIA certos para leitor de tela.
 export function RevogarSessoesButton({
   userId,
   username,
@@ -17,14 +31,12 @@ export function RevogarSessoesButton({
   username: string;
 }) {
   const queryClient = useQueryClient();
-  const [confirming, setConfirming] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () => adminUsuariosControllerRevogarSessoesV1(userId),
     onSuccess: (res) => {
       setFeedback(`${unwrap(res).revogadas} sessão(ões) revogada(s).`);
-      setConfirming(false);
       // outras linhas/páginas podem estar com dado cacheado desatualizado
       void queryClient.invalidateQueries({ queryKey: ['admin-usuarios'] });
     },
@@ -34,44 +46,38 @@ export function RevogarSessoesButton({
           ? (err.problem.detail ?? 'Falha ao revogar as sessões.')
           : 'Falha ao revogar as sessões.',
       );
-      setConfirming(false);
     },
   });
 
   if (feedback) {
-    return <span className="text-xs text-ink-faint">{feedback}</span>;
-  }
-
-  if (confirming) {
-    return (
-      <span className="flex items-center gap-2 text-xs">
-        <span className="text-ink-soft">Derrubar sessões de {username}?</span>
-        <button
-          type="button"
-          onClick={() => mutation.mutate()}
-          disabled={mutation.isPending}
-          className="rounded-md bg-bad px-2 py-1 font-medium text-on-bad disabled:opacity-60"
-        >
-          {mutation.isPending ? 'Revogando…' : 'Confirmar'}
-        </button>
-        <button
-          type="button"
-          onClick={() => setConfirming(false)}
-          className="text-ink-soft hover:text-ink"
-        >
-          Cancelar
-        </button>
-      </span>
-    );
+    return <span className="text-xs text-muted-foreground">{feedback}</span>;
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => setConfirming(true)}
-      className="rounded-md border border-line px-2 py-1 text-xs text-ink-soft hover:text-ink"
-    >
-      Revogar sessões
-    </button>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="xs">
+          Revogar sessões
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Derrubar sessões de {username}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Todas as sessões ativas desse usuário são encerradas em todos os
+            dispositivos. Ele precisará entrar de novo. Não há desfazer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={mutation.isPending}
+            onClick={() => mutation.mutate()}
+          >
+            {mutation.isPending ? 'Revogando…' : 'Confirmar'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

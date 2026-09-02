@@ -15,23 +15,30 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between gap-6 border-b border-line px-6 py-4">
+      <header className="flex items-center justify-between gap-6 border-b px-6 py-4">
         <div className="flex items-center gap-6">
-          <span className="font-display text-lg font-semibold text-ink">
-            Titula RR
-          </span>
+          <span className="font-serif text-lg font-semibold">Titula RR</span>
           {user && (
             <nav className="flex items-center gap-4 text-sm">
-              <Link href="/" className="text-ink-soft hover:text-ink">
+              <Link
+                href="/"
+                className="text-muted-foreground hover:text-foreground"
+              >
                 Início
               </Link>
               {podeListarUsuarios(user.papeis) && (
-                <Link href="/admin" className="text-ink-soft hover:text-ink">
+                <Link
+                  href="/admin"
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   Administração
                 </Link>
               )}
               {/* sem gate de papel — /status é pública na API também */}
-              <Link href="/status" className="text-ink-soft hover:text-ink">
+              <Link
+                href="/status"
+                className="text-muted-foreground hover:text-foreground"
+              >
                 Status
               </Link>
             </nav>
@@ -41,8 +48,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         {user && (
           <div className="flex items-center gap-4">
             <div className="text-right text-sm leading-tight">
-              <p className="text-ink">{user.name}</p>
-              <p className="text-ink-faint">{user.papeis.join(', ') || '—'}</p>
+              <p>{user.name}</p>
+              <p className="text-muted-foreground">
+                {user.papeis.join(', ') || '—'}
+              </p>
             </div>
             <LogoutButton />
           </div>

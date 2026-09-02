@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { authControllerLogoutV1 } from '@/lib/api/generated/auth/auth';
 
 export function LogoutButton() {
@@ -21,13 +22,13 @@ export function LogoutButton() {
   }
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="outline"
+      size="sm"
       onClick={handleLogout}
       disabled={pending}
-      className="rounded-md border border-line px-3 py-1.5 text-sm text-ink-soft outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-60"
     >
       {pending ? 'Saindo…' : 'Sair'}
-    </button>
+    </Button>
   );
 }

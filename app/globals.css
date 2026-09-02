@@ -4,95 +4,160 @@
  * TOKENS — fonte única de verdade. Nenhuma cor/fonte deve aparecer como
  * literal (hex, nome de família) em componente nenhum — sempre por uma
  * dessas variáveis, via as classes utilitárias que o @theme inline gera
- * logo abaixo (bg-paper, text-ink, font-display, etc.).
+ * logo abaixo (bg-background, text-foreground, border-border, etc.).
  *
- * Paleta ancorada no assunto do sistema (regularização fundiária): "tinta
- * de agrimensor" (accent) e "latão de instrumento de topografia" (brass),
- * não a dupla genérica azul-corporativo. Verde e âmbar SEMÂNTICOS (good/
- * warn/bad) são intencionalmente distintos do accent — um botão primário
- * não pode ser confundido com "deu certo".
+ * O VOCABULÁRIO é o do shadcn/ui (background/foreground/primary/muted/…),
+ * adotado em 02/09/2026 para que qualquer componente do registro caia no
+ * lugar sem tradução. A PALETA continua sendo a do projeto: "tinta de
+ * agrimensor" no primary e "latão de instrumento de topografia" no brass,
+ * não a dupla genérica azul-corporativo.
+ *
+ * Três extensões ao vocabulário do shadcn, onde ele é omisso:
+ *   --success / --warning  o painel de status tem TRÊS estados (ok,
+ *                          degradado, fora do ar) e o shadcn só oferece
+ *                          --destructive. São semânticos: dizem "está tudo
+ *                          bem", nunca "isto é clicável".
+ *   --brass                a segunda cor de marca. Não vira --secondary de
+ *                          propósito: no vocabulário do shadcn, secondary é
+ *                          superfície discreta de botão, e latão ali seria
+ *                          alto demais.
+ *
+ * Modo escuro segue a preferência do sistema. Não existe seletor manual na
+ * UI; o `dark:` do Tailwind v4 já é baseado em prefers-color-scheme por
+ * padrão, então os dois combinam sem custom-variant nenhuma.
  * ========================================================================== */
 
 :root {
-  --paper: #f1f2ed;
-  --surface: #faf9f5;
-  --ink: #1e231f;
-  --ink-soft: #55564c;
-  --ink-faint: #8a8a78;
-  --line: #d9d6c8;
+  --radius: 0.375rem;
 
-  --accent: #2b6b5e;
-  --on-accent: #ffffff;
+  --background: #f1f2ed;
+  --foreground: #1e231f;
+
+  --card: #faf9f5;
+  --card-foreground: #1e231f;
+  --popover: #faf9f5;
+  --popover-foreground: #1e231f;
+
+  --primary: #2b6b5e;
+  --primary-foreground: #ffffff;
+
+  /* superfícies discretas — secondary, muted e accent são o MESMO tom de
+   * propósito: no vocabulário do shadcn os três são "fundo que recua", e
+   * inventar três tons diferentes só produziria ruído visual. */
+  --secondary: #e6e3d7;
+  --secondary-foreground: #1e231f;
+  --muted: #e6e3d7;
+  --muted-foreground: #55564c;
+  --accent: #e6e3d7;
+  --accent-foreground: #1e231f;
+
+  --destructive: #a23b33;
+  --destructive-foreground: #ffffff;
+
+  --border: #d9d6c8;
+  --input: #d9d6c8;
+  --ring: #2b6b5e;
+
+  /* extensões (ver cabeçalho) */
+  --success: #3e7a4e;
+  --success-foreground: #ffffff;
+  --warning: #a2701f;
+  --warning-foreground: #ffffff;
   --brass: #8c6a2c;
-  --on-brass: #1e231f;
-
-  --good: #3e7a4e;
-  --warn: #a2701f;
-  --bad: #a23b33;
-  --on-good: #ffffff;
-  --on-warn: #ffffff;
-  --on-bad: #ffffff;
+  --brass-foreground: #1e231f;
 }
 
-/* Segue a preferência do sistema — sem seletor de tema manual ainda (não
- * existe toggle na UI; se um dia existir, um atributo em <html> entra aqui
- * do lado do media query, sem mexer nos valores). */
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #12160f;
-    --surface: #181d16;
-    --ink: #e8e5d8;
-    --ink-soft: #aca98f;
-    --ink-faint: #767460;
-    --line: #2b3126;
+    --background: #12160f;
+    --foreground: #e8e5d8;
 
-    --accent: #5cb69f;
-    --on-accent: #0d1712;
+    --card: #181d16;
+    --card-foreground: #e8e5d8;
+    --popover: #181d16;
+    --popover-foreground: #e8e5d8;
+
+    --primary: #5cb69f;
+    --primary-foreground: #0d1712;
+
+    --secondary: #222719;
+    --secondary-foreground: #e8e5d8;
+    --muted: #222719;
+    --muted-foreground: #aca98f;
+    --accent: #222719;
+    --accent-foreground: #e8e5d8;
+
+    --destructive: #d3695f;
+    --destructive-foreground: #0d1712;
+
+    --border: #2b3126;
+    --input: #2b3126;
+    --ring: #5cb69f;
+
+    --success: #5fae72;
+    --success-foreground: #0d1712;
+    --warning: #cf9b45;
+    --warning-foreground: #1e1608;
     --brass: #d4a75c;
-    --on-brass: #1e1608;
-
-    --good: #5fae72;
-    --warn: #cf9b45;
-    --bad: #d3695f;
-    --on-good: #0d1712;
-    --on-warn: #1e1608;
-    --on-bad: #1e1608;
+    --brass-foreground: #1e1608;
   }
 }
 
 /* @theme inline (não @theme puro): referencia variáveis que só existem em
  * runtime — as --font-* vêm do next/font (app/layout.tsx), as de cor vêm
  * do :root acima. Cada variável --color-x ou --font-x aqui vira
- * automaticamente uma classe utilitária do Tailwind (bg-paper,
- * text-ink-soft, font-display...). */
+ * automaticamente uma classe utilitária do Tailwind (bg-background,
+ * text-muted-foreground, font-serif...). */
 @theme inline {
-  --color-paper: var(--paper);
-  --color-surface: var(--surface);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-ink-faint: var(--ink-faint);
-  --color-line: var(--line);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
-  --color-on-accent: var(--on-accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-brass: var(--brass);
-  --color-on-brass: var(--on-brass);
+  --color-brass-foreground: var(--brass-foreground);
 
-  --color-good: var(--good);
-  --color-warn: var(--warn);
-  --color-bad: var(--bad);
-  --color-on-good: var(--on-good);
-  --color-on-warn: var(--on-warn);
-  --color-on-bad: var(--on-bad);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
 
-  /* Display (Fraunces): só títulos, com moderação. Corpo/UI (Plex Sans):
-   * tudo que é formulário, tabela, texto de trabalho. Mono (Plex Mono):
-   * número de protocolo/matrícula, IDs — sempre com tabular-nums. */
-  --font-display: var(--font-fraunces), ui-serif, serif;
-  --font-body: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Serif (Fraunces): só títulos, com moderação. Sans (Plex Sans): tudo que
+   * é formulário, tabela, texto de trabalho. Mono (Plex Mono): número de
+   * protocolo/matrícula, IDs — sempre com tabular-nums. */
+  --font-serif: var(--font-fraunces), ui-serif, serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
-body {
-  font-family: var(--font-body);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground;
+  }
 }

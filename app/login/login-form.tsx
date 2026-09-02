@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { authControllerLoginV1 } from '@/lib/api/generated/auth/auth';
 import { ApiError } from '@/lib/api/problem-details';
 
@@ -17,11 +20,6 @@ const loginSchema = z.object({
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
-
-// Campo de texto do formulário — único lugar onde a classe do <input> é
-// escrita, pra label/senha nunca divergirem visualmente por engano.
-const fieldClass =
-  'rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/35';
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
@@ -90,45 +88,35 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       noValidate
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="username" className="text-sm font-medium text-ink-soft">
-          Usuário
-        </label>
-        <input
+        <Label htmlFor="username">Usuário</Label>
+        <Input
           id="username"
           autoComplete="username"
-          className={fieldClass}
           {...register('username')}
         />
         {errors.username && (
-          <p className="text-sm text-bad">{errors.username.message}</p>
+          <p className="text-sm text-destructive">{errors.username.message}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-ink-soft">
-          Senha
-        </label>
-        <input
+        <Label htmlFor="password">Senha</Label>
+        <Input
           id="password"
           type="password"
           autoComplete="current-password"
-          className={fieldClass}
           {...register('password')}
         />
         {errors.password && (
-          <p className="text-sm text-bad">{errors.password.message}</p>
+          <p className="text-sm text-destructive">{errors.password.message}</p>
         )}
       </div>
 
-      {formError && <p className="text-sm text-bad">{formError}</p>}
+      {formError && <p className="text-sm text-destructive">{formError}</p>}
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="mt-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:opacity-60"
-      >
+      <Button type="submit" disabled={isSubmitting} className="mt-2">
         {isSubmitting ? 'Entrando…' : 'Entrar'}
-      </button>
+      </Button>
     </form>
   );
 }
