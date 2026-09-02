@@ -22,6 +22,22 @@
  *                          superfície discreta de botão, e latão ali seria
  *                          alto demais.
  *
+ * CONTRASTE é requisito, não gosto: sistema de governo, WCAG 2.1 AA — 4.5:1
+ * para texto e 3:1 para o que IDENTIFICA um controle (1.4.11). Os valores
+ * abaixo foram medidos, não estimados, e `lib/design-tokens.test.ts` recusa
+ * uma alteração que os quebre. Se você mudar uma cor aqui, o teste diz na
+ * hora se ela ainda serve.
+ *
+ * Duas sutilezas que a medição ensinou:
+ *   --input  é SEPARADO de --border de propósito. Divisória é decoração e
+ *            não tem requisito; o contorno de um campo vazio é a única coisa
+ *            que diz "digite aqui", então precisa dos 3:1. Apontar os dois
+ *            para o mesmo valor deixava o campo praticamente invisível
+ *            (1.30:1) — foi assim até 02/09/2026.
+ *   destructive no escuro parece falhar se você medir a cor cheia, mas o
+ *            Badge e o Button usam `bg-destructive/60` ali: o fundo real é a
+ *            mistura com o --background, e sobre ela o branco dá 7.07:1.
+ *
  * Modo escuro segue a preferência do sistema. Não existe seletor manual na
  * UI; o `dark:` do Tailwind v4 já é baseado em prefers-color-scheme por
  * padrão, então os dois combinam sem custom-variant nenhuma.
@@ -54,17 +70,17 @@
   --destructive: #a23b33;
   --destructive-foreground: #ffffff;
 
-  --border: #d9d6c8;
-  --input: #d9d6c8;
-  --ring: #2b6b5e;
+  --border: #d9d6c8; /* divisória: decoração, sem requisito */
+  --input: #8c8a82; /* contorno de controle: 3.07:1 sobre --background */
+  --ring: #2b6b5e; /* 5.54:1 */
 
   /* extensões (ver cabeçalho) */
   --success: #3e7a4e;
   --success-foreground: #ffffff;
-  --warning: #a2701f;
+  --warning: #9e6d1e; /* branco: 4.51:1 */
   --warning-foreground: #ffffff;
   --brass: #8c6a2c;
-  --brass-foreground: #1e231f;
+  --brass-foreground: #ffffff; /* 4.98:1 — com o quase-preto anterior dava 3.20 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -90,9 +106,9 @@
     --destructive: #d3695f;
     --destructive-foreground: #0d1712;
 
-    --border: #2b3126;
-    --input: #2b3126;
-    --ring: #5cb69f;
+    --border: #2b3126; /* divisória */
+    --input: #62655e; /* 3.09:1 sobre --background */
+    --ring: #5cb69f; /* 7.54:1 */
 
     --success: #5fae72;
     --success-foreground: #0d1712;
