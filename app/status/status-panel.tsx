@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { fetchHealth } from '@/lib/api/health';
@@ -36,6 +35,21 @@ const DIRECTORY_LABEL: Record<HealthStatusDto['directory'], string> = {
   disabled: 'Desligado (AUTH_VALIDATOR≠ad)',
 };
 
+// A hora vem do CAMPO `timestamp` do payload — o instante em que a API
+// mediu —, nunca de um relógio local. Ler a hora durante o render é impuro
+// (react-hooks/purity) e, pior, produz um texto no servidor e outro no
+// cliente: hydration mismatch a cada carga, com o React descartando a árvore
+// e refazendo. Vindo do dado, os dois lados renderizam a mesma coisa.
+//
+// O fuso é EXPLÍCITO pelo mesmo motivo: o container roda em UTC e o navegador
+// em Boa Vista, então o mesmo instante viraria textos diferentes. Mesmo
+// raciocínio do data_local() da api-titula-rr.
+function formatarHora(iso: string): string {
+  return new Date(iso).toLocaleTimeString('pt-BR', {
+    timeZone: 'America/Boa_Vista',
+  });
+}
+
 export function formatUptime(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -43,7 +57,7 @@ export function formatUptime(seconds: number): string {
 }
 
 export function StatusPanel({ initialData }: { initialData: HealthStatusDto }) {
-  const { data, dataUpdatedAt } = useQuery({
+  const { data } = useQuery({
     queryKey: ['health'],
     // sem baseUrl: navegador, caminho relativo, mesma origem.
     queryFn: () => fetchHealth(),
@@ -56,20 +70,6 @@ export function StatusPanel({ initialData }: { initialData: HealthStatusDto }) {
 
   const health = data;
 
-  // A hora formatada NÃO pode sair do servidor. `dataUpdatedAt` é o instante
-  // em que o cache foi preenchido — no SSR, a hora do servidor; no cliente, a
-  // hora em que ele adotou o initialData. Os dois nunca coincidem, e
-  // `toLocaleTimeString` ainda depende do fuso do processo (o container roda
-  // em UTC, o navegador em Boa Vista). Renderizar isso no servidor produzia
-  // hydration mismatch a cada carga: o React descartava a árvore e refazia no
-  // cliente. Começar em null e preencher no efeito faz servidor e cliente
-  // concordarem no primeiro render, que é a única coisa que a hidratação
-  // compara.
-  const [atualizadoEm, setAtualizadoEm] = useState<string | null>(null);
-  useEffect(() => {
-    setAtualizadoEm(new Date(dataUpdatedAt).toLocaleTimeString('pt-BR'));
-  }, [dataUpdatedAt]);
-
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -78,7 +78,7 @@ export function StatusPanel({ initialData }: { initialData: HealthStatusDto }) {
             {STATUS_LABEL[health.status]}
           </Badge>
           <span className="text-sm text-muted-foreground tabular-nums">
-            atualizado {atualizadoEm ?? '—'}
+            medido às {formatarHora(health.timestamp)}
           </span>
         </CardContent>
       </Card>
