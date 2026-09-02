@@ -31,5 +31,12 @@ export default defineConfig({
         },
       },
     },
+    // O lint-staged formata o que passa por commit, mas o CI regenera num
+    // checkout limpo: sem este hook a saída crua do orval (aspas duplas)
+    // diferiria do que está commitado e o job `contrato` acusaria um falso
+    // positivo a cada execução.
+    hooks: {
+      afterAllFilesWrite: 'prettier --write',
+    },
   },
 });
