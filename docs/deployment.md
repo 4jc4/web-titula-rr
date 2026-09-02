@@ -29,9 +29,19 @@ subdiretório, aplica as migrações num Postgres de serviço e sobe a API com
 `AUTH_VALIDATOR=fake` e `NODE_ENV=test` — o segundo desliga o throttle de
 login, sem o qual a suíte esbarra no limite de 5/min de tanto logar. Como o
 checkout é do branch padrão da API **sem `ref:` fixado**, uma mudança lá pode
-deixar vermelho um PR daqui que não encostou em nada. Isso é o mecanismo que
-detecta divergência de contrato — mas hoje é acidental, não escolhido: ver
-`R-04` na análise.
+deixar vermelho um PR daqui que não encostou em nada. Isso passou a ser
+**deliberado** em 02/09/2026, fechando o `R-04`: é o único lugar que prova o
+comportamento contra a API real, e fixar a ref o transformaria num teste
+contra uma foto antiga. O job `contrato` cobre o lado dos tipos; este, o do
+comportamento.
+
+O **`contrato`** regenera `lib/api/generated` a partir do
+`openapi/openapi.json` que a API versiona e falha se o resultado divergir do
+que está commitado. É a resposta ao achado `R-01`: antes, uma divergência só
+apareceria se algum dos nove testes e2e passasse por cima dela — foi assim que
+o enum `Papel` ficou dois dias errado aqui. Se este job ficar vermelho, o
+conserto é uma linha:
+`ORVAL_API_URL=../api-titula-rr/openapi/openapi.json npm run codegen`.
 
 O **`docker-image`** sobe o container com `API_INTERNAL_URL` apontando para o
 vazio, de propósito, e exige que `/status` devolva 200 mostrando "Fora do ar".
@@ -42,14 +52,22 @@ O título do PR é validado à parte contra Conventional Commits
 ([`pr-title.yml`](../.github/workflows/pr-title.yml)) — PRs são squash-merged e
 o título vira a mensagem do commit no `main`.
 
-### Dívida conhecida nos workflows
+### Convenções dos workflows
 
-O endurecimento que a `api-titula-rr` recebeu **ainda não foi transplantado
-para cá**: faltam `permissions:` declarado, `concurrency` no CI,
-`timeout-minutes` nos jobs, e as actions estão em tag flutuante (`@v7`, `@v4`)
-em vez de SHA fixado. É o achado `R-03`, e o trabalho já foi feito uma vez do
-outro lado — cabe quase por cópia. O `e2e-tests` também roda a API contra
-PostgreSQL 17 enquanto produção é 16 (`R-02`).
+Alinhadas com a `api-titula-rr` desde 02/09/2026:
+
+- **Toda action é fixada por SHA de commit**, com a versão no comentário ao
+  lado. Tag é ponteiro móvel: quem controla `actions/checkout` pode reapontar
+  `v7` a qualquer momento, e o CD roda num runner **dentro da intranet**, com
+  o `.env` de produção ao lado. Para atualizar:
+  `git ls-remote https://github.com/actions/checkout refs/tags/v7`.
+- **`permissions: contents: read` em todo workflow.** O default do
+  repositório é mais largo do que qualquer um deles precisa.
+- **`timeout-minutes` em todo job.** Nos hospedados é higiene; no CD é
+  necessidade — um job travado segura a nossa máquina, e o `concurrency` do CD
+  não cancela. O default do GitHub é seis horas.
+- **`concurrency`** com `cancel-in-progress` oposto nos dois lados: o CI
+  cancela o run anterior da mesma ref, o CD não.
 
 ## 2. Entrega contínua
 

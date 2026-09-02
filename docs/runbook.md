@@ -112,16 +112,11 @@ caso de falha.
 Registradas para não se perderem, não porque são urgentes. A análise completa,
 com as consequências de cada uma, está publicada à parte.
 
-- [ ] **`R-01` — nada detecta divergência de contrato antes do e2e.** Com a API
-      versionando `openapi/openapi.json`, dá para rodar `codegen` seguido de
-      `git diff --exit-code` no CI. Vale decidir junto se a guarda cobre também
-      as fixtures do validador fake e o nome do cookie, que são contrato sem
-      estar no OpenAPI.
-- [ ] **`R-02` — o e2e roda a API contra PostgreSQL 17**, enquanto produção é 16. Uma linha no `ci.yml`.
-- [ ] **`R-03` — o endurecimento dos workflows** feito na API ainda não veio
-      para cá.
-- [ ] **`R-04` — o e2e depende do `main` do repositório irmão sem `ref:`
-      fixado.** Defensável como escolha, mas hoje é acidental.
+- [ ] **As fixtures do validador fake não têm guarda.** O job `contrato` do CI
+      cobre os tipos que vêm do OpenAPI; os nomes de `dev.gestor` e companhia
+      continuam sendo contrato informal entre os dois repositórios. Um teste do
+      lado da API que falhe ao renomear uma fixture avisaria quem faz a
+      mudança — que é quem pode agir.
 - [ ] **`M-01` — `SESSION_COOKIE` duplicado à mão** entre os dois
       repositórios.
 - [ ] **`M-03` — o CI sobe a API em modo watch** (`start:dev`), o que num
