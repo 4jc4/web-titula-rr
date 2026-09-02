@@ -152,6 +152,42 @@ inalcançável — quando o fetch em si lança e não há resposta para ler. Sem
 a página quebraria com 500 justamente na hora em que "a API caiu" é a
 informação que quem olha essa tela precisa ver.
 
+## Interface
+
+Três peças, e a ordem entre elas importa.
+
+**Tailwind CSS 4**, configurado dentro do CSS — não há `tailwind.config.js`.
+
+**Design tokens** em `app/globals.css`, em `:root` e no bloco de
+`prefers-color-scheme: dark`. A regra é dura: nenhuma cor ou família de fonte
+aparece como literal em componente nenhum, sempre pela variável, através das
+classes utilitárias que o `@theme inline` gera.
+
+**shadcn/ui** em `components/ui/`, adotado em 02/09/2026. Os componentes são
+**copiados para o repositório**, não instalados como biblioteca: eles são
+nosso código, passam pelo lint e pelo prettier, e editá-los é o uso previsto —
+o `badge.tsx` já carrega duas variantes que não existem no registro.
+
+O ponto que decide tudo isso é o **vocabulário dos tokens**. O shadcn espera
+nomes próprios (`background`, `foreground`, `primary`, `muted`, `border`,
+`ring`, `destructive`), e o projeto adotou esse vocabulário para que qualquer
+componente do registro caia no lugar sem tradução. A **paleta**, essa continua
+sendo a do projeto — "tinta de agrimensor" no `primary`, "latão de instrumento
+de topografia" no `brass`.
+
+Há uma armadilha nessa adoção que vale conhecer: no vocabulário do shadcn,
+`--accent` significa _superfície discreta de hover_, não cor de marca — o que
+o projeto chamava de accent virou `--primary`. Rodar `npx shadcn init` por
+cima escreveria o bloco padrão e trocaria o significado de `--accent` em
+silêncio, sem erro de compilação e sem teste quebrando. Por isso a fundação
+foi escrita à mão e o `init` nunca foi rodado.
+
+Três tokens são extensão nossa, onde o vocabulário do shadcn é omisso:
+`--success` e `--warning`, porque o painel de status tem três estados e o
+registro só oferece `--destructive`; e `--brass`, a segunda cor de marca, que
+não virou `--secondary` porque ali o shadcn espera uma superfície discreta e
+latão seria alto demais.
+
 ## Testes
 
 - **Unitários** (Vitest): funções puras e um teste de componente para o

@@ -182,6 +182,18 @@ This file stays for conventions and traps; anything operational belongs in
   renamed a fixture's `name`. Assertions on those names are exact **on
   purpose**: a test that accepted any name would stop proving the data came
   from the API.
+- **No color literal in any component.** Every color comes from a token in
+  `app/globals.css`, through the utility classes `@theme inline` generates
+  (`bg-background`, `text-muted-foreground`, `border-border`…). The
+  vocabulary is shadcn's, the palette is the project's — see the header of
+  that file for the mapping and for the three extensions (`success`,
+  `warning`, `brass`) where shadcn is silent.
+- **`components/ui/` is ours, not a dependency.** shadcn copies components
+  in; editing them is the intended workflow, not a fork. `badge.tsx` already
+  carries two variants that aren't upstream. Adding a component:
+  `npx shadcn@latest add <name>` — and answer **no** if it ever offers to
+  overwrite `app/globals.css`, which would replace the palette with its
+  default one.
 - **Playwright's `github` reporter is load-bearing in CI.** Without it a
   failure's reason lives only inside the log text, which GitHub stores in an
   Azure blob — anyone reading the repository through the GitHub API gets just

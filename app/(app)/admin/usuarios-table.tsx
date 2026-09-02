@@ -2,6 +2,15 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { adminUsuariosControllerListarV1 } from '@/lib/api/generated/admin-usuarios/admin-usuarios';
 import type { PaginaUsuariosDtoOutput } from '@/lib/api/generated/titulaRRAPI.schemas';
 import { RevogarSessoesButton } from './revogar-sessoes-button';
@@ -32,71 +41,69 @@ export function UsuariosTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto rounded-md border border-line">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-line bg-surface text-left text-ink-soft">
-              <th className="px-4 py-2 font-medium">Usuário</th>
-              <th className="px-4 py-2 font-medium">Nome</th>
-              <th className="px-4 py-2 font-medium">Papéis</th>
-              {canRevoke && <th className="px-4 py-2 font-medium">Ações</th>}
-            </tr>
-          </thead>
-          <tbody>
+      <div className="overflow-x-auto rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Usuário</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Papéis</TableHead>
+              {canRevoke && <TableHead>Ações</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {pagina.items.map((item) => (
-              <tr key={item.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-2 font-mono text-ink">
-                  {item.username}
-                </td>
-                <td className="px-4 py-2 text-ink">{item.name}</td>
-                <td className="px-4 py-2 text-ink-soft">
+              <TableRow key={item.id}>
+                <TableCell className="font-mono">{item.username}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell className="text-muted-foreground">
                   {item.papeis.join(', ') || '—'}
-                </td>
+                </TableCell>
                 {canRevoke && (
-                  <td className="px-4 py-2">
+                  <TableCell>
                     <RevogarSessoesButton
                       userId={item.id}
                       username={item.username}
                     />
-                  </td>
+                  </TableCell>
                 )}
-              </tr>
+              </TableRow>
             ))}
             {pagina.items.length === 0 && (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={canRevoke ? 4 : 3}
-                  className="px-4 py-6 text-center text-ink-faint"
+                  className="py-6 text-center text-muted-foreground"
                 >
                   Nenhum usuário nesta página.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-ink-soft">
-        <span>
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span className="tabular-nums">
           Página {pagina.page} de {totalPaginas} — {pagina.total} usuário(s)
         </span>
         <div className="flex gap-2">
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={pagina.page <= 1}
-            className="rounded-md border border-line px-3 py-1.5 disabled:opacity-40"
           >
             Anterior
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage((p) => Math.min(totalPaginas, p + 1))}
             disabled={pagina.page >= totalPaginas}
-            className="rounded-md border border-line px-3 py-1.5 disabled:opacity-40"
           >
             Próxima
-          </button>
+          </Button>
         </div>
       </div>
     </div>

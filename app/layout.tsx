@@ -5,7 +5,7 @@ import { Providers } from './providers';
 
 // Três papéis, três famílias — nunca uma string de font-family solta num
 // componente (ver globals.css: @theme inline mapeia estas variáveis pros
-// tokens font-display/font-body/font-mono).
+// tokens font-serif/font-sans/font-mono, no vocabulário do shadcn).
 const fraunces = Fraunces({
   variable: '--font-fraunces',
   subsets: ['latin'],
@@ -34,7 +34,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       lang="pt-BR"
       className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-paper text-ink">
+      <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
       </body>
     </html>

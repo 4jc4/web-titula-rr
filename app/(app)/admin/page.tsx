@@ -42,8 +42,8 @@ export default async function AdminUsuariosPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="font-display text-2xl font-semibold text-ink">Usuários</h1>
-      <p className="mt-1 text-sm text-ink-soft">
+      <h1 className="font-serif text-2xl font-semibold">Usuários</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
         Contas provisionadas no sistema.
       </p>
 

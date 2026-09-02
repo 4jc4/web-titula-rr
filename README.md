@@ -19,7 +19,10 @@ origem que a API via Nginx.
 ## Stack
 
 - **Next.js 16** (App Router) + **TypeScript**
-- **Tailwind CSS 4**
+- **Tailwind CSS 4** com design tokens em `app/globals.css` — nenhuma cor
+  aparece como literal em componente nenhum
+- **shadcn/ui** (`components/ui/`) — componentes copiados para o repositório,
+  não uma dependência de UI kit
 - **orval**: gera tipos e cliente HTTP a partir do OpenAPI da
   `api-titula-rr` — fonte única do contrato, nunca editado à mão
   (`lib/api/generated/`, commitado no repositório)

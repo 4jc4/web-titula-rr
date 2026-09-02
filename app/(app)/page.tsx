@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
 import { getCurrentUser } from '@/lib/session/current-user';
 
 export default async function HomePage() {
@@ -8,21 +9,23 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="font-display text-2xl font-semibold text-ink">
+      <h1 className="font-serif text-2xl font-semibold">
         Olá, {user.name.split(' ')[0]}
       </h1>
-      <p className="mt-1 text-sm text-ink-soft">Bem-vindo ao Titula RR.</p>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Bem-vindo ao Titula RR.
+      </p>
 
-      <section className="mt-6 rounded-md border border-line bg-surface p-4 text-sm">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
-          <dt className="text-ink-soft">Usuário</dt>
-          <dd className="font-mono text-ink">{user.username}</dd>
-          <dt className="text-ink-soft">Papéis</dt>
-          <dd className="text-ink">
-            {user.papeis.length > 0 ? user.papeis.join(', ') : '—'}
-          </dd>
-        </dl>
-      </section>
+      <Card className="mt-6">
+        <CardContent>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+            <dt className="text-muted-foreground">Usuário</dt>
+            <dd className="font-mono">{user.username}</dd>
+            <dt className="text-muted-foreground">Papéis</dt>
+            <dd>{user.papeis.length > 0 ? user.papeis.join(', ') : '—'}</dd>
+          </dl>
+        </CardContent>
+      </Card>
     </div>
   );
 }
